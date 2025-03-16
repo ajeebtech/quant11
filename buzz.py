@@ -25,7 +25,8 @@ load_cookies_from_file(driver, file_path)
 
 search_box = driver.find_element(By.CLASS_NAME, "Ax4B8")
 search_box.click()  
-search_box.send_keys("Technology") 
+subject = 'Technology'
+search_box.send_keys(subject) 
 search_box.send_keys(Keys.RETURN) 
 base_url = driver.current_url
 driver.get(base_url)
@@ -45,17 +46,17 @@ for href in hrefs:
 
     # Extract all text from the <body> tag
     text = driver.find_element(By.TAG_NAME, "body").text
-
     driver.quit()
     response = ollama.chat(
                 model='granite3.1-dense',
                 messages=[{
                     'role': 'user',
-                    'content': f'{text} \n summarise this article',
+                    'content': f"{text} \n summarise this article, but don't return anything if the article isn't about {subject}",
                 }]
             )
     response = response['message']['content'].strip()
-    print(response)
+    [score,sentimnt] = sentiment(document=response)
+    print(f"Sentiment: {sentimnt} | Score: {score:.4f}")
+    driver.quit()
     break
 
-time.sleep(1331)

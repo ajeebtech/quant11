@@ -1,12 +1,51 @@
-from nltk.corpus import stopdocument
+from nltk.corpus import stopwords
 import nltk
 from transformers import pipeline
+import requests
+from bs4 import BeautifulSoup
+import random
+import os
+import json
+
+class Player:
+    def __init__(self,name,team):
+        self.name = name
+        self.team = team
+
+    def teamcode(self):
+        self.team = twt_ids[self.team]
 
 
-def sentiment(document):
+xrapidapikey = os.getenv("x-rapidapi-key")
+twt_ids = {'csk':'117407834','dc':'176888549','rcb':'70931004','mi':'106345557',
+           'srh':'989137039','pbks':'30631766','kkr':'23592970','gt':'1476438846988427265',
+           'lsg':'4824087681','rr':'17082958'}
+def sentiment(document,subject):     # do this for twitter as well
     nltk.download("stopwords")
-    stop_words = set(stopdocument.document("english"))
-    document = [word for word in document if word.lower() not in stop_words]
+    stop_words = set(stopwords.words("english"))
+    url = "https://twitter241.p.rapidapi.com/user-tweets"
+
+    querystring = {"user":subject.team,"count":"5"}
+
+    headers = {
+        "x-rapidapi-key": xrapidapikey,
+        "x-rapidapi-host": "twitter241.p.rapidapi.com"
+    }
+    response = requests.get(url, headers=headers, params=querystring)
+    full_texts = []
+
+    for instruction in response:
+        if "entries" in instruction:
+            for entry in instruction["entries"]:
+                if "full_text" in entry:
+                    subject_words = subject.split()
+                    if all(word in entry["full_text"] for word in subject_words):
+                        full_texts.append(entry["full_text"])
+    document = [word for word in document+f' {full_texts}' if word.lower() not in stop_words]
+
+    with open('twt.json', 'w') as f:
+        json.dump(response.json(),f,indent=4)
+    print(response.json())
     classifier = pipeline("sentiment-analysis", model="distilbert/distilbert-base-uncased-finetuned-sst-2-english")
     results = classifier(document)
     total_score = 0
@@ -69,3 +108,14 @@ def player_to_json(player):
 
 def newscheck(subject):
     pass
+
+def getplayers(match_link):
+    # get all the playing xi
+    pass
+
+def making_changes():
+    pass
+
+def weather():
+    pass
+
